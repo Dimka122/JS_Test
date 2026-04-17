@@ -1,4 +1,4 @@
-* {
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -56,17 +56,19 @@
 
         #lettersContainer {
             position: relative;
-            min-height: 150px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 100px;
             padding: 20px;
             background: #f8f9fa;
             border: 2px dashed #ddd;
             border-radius: 10px;
-        }
-
-
+            align-items: center;
+}
 
         .letter {
-            display: inline-flex;
+            display: flex;
             justify-content: center;
             align-items: center;
             width: 40px;
@@ -80,9 +82,7 @@
             cursor: grab;
             user-select: none;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            position: relative;
-            z-index: 10;
-            margin: 5px;
+            transition: transform 0.2s, opacity 0.2s;
         }
 
         .letter:hover {
@@ -100,20 +100,21 @@
         .letter.dragging {
             opacity: 0.8;
             cursor: grabbing;
-            z-index: 1000;
         }
 
         #selectionBox {
-            position: absolute;
-            border: 2px dashed #667eea;
-            background: rgba(102, 126, 234, 0.2);
-            pointer-events: none;
-            z-index: 50;
-            display: none;
+        position: absolute;
+        border: 2px dashed #667eea;
+        background: rgba(102, 126, 234, 0.2);
+        pointer-events: none;
+        z-index: 50;
+        display: none;
         }
+
 
         #placeholder {
             color: #999;
             text-align: center;
-            padding: 20px;
+            width: 100%;
+            
         }

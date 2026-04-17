@@ -5,8 +5,10 @@ const selectionBox = document.getElementById('selectionBox');
 const placeholder = document.getElementById('placeholder');
 
 let letters = [];
-let selectedLetters = new Set(); 
-let isSelecting = false; 
+let selectedLetters = new Set();
+let draggedLetter = null;
+
+let isSelecting = false;
 let selectionStart = { x: 0, y: 0 };
 
 applyBtn.addEventListener('click', () => {
@@ -29,6 +31,7 @@ function createLetters(text) {
 
     letters.forEach(l => l.remove());
     letters = [];
+    selectedLetters.clear();
 
     for (let i = 0; i < text.length; i++) {
         const char = text[i];
@@ -37,8 +40,14 @@ function createLetters(text) {
         const letter = document.createElement('div');
         letter.className = 'letter';
         letter.textContent = char;
+        letter.draggable = true;
 
-        letter.addEventListener('mousedown', handleLetterMouseDown);
+        letter.addEventListener('dragstart', handleDragStart);
+        letter.addEventListener('dragend', handleDragEnd);
+        letter.addEventListener('dragover', handleDragOver);
+        letter.addEventListener('drop', handleDrop);
+        
+        letter.addEventListener('click', handleLetterClick);
         letter.addEventListener('contextmenu', (e) => e.preventDefault());
 
         lettersContainer.appendChild(letter);
@@ -48,10 +57,7 @@ function createLetters(text) {
     console.log('Создано букв:', letters.length);
 }
 
-function handleLetterMouseDown(e) {
-    e.preventDefault();
-    e.stopPropagation();
-
+function handleLetterClick(e) {
     const letter = e.target;
 
     if (e.ctrlKey || e.metaKey) {
@@ -65,10 +71,55 @@ function handleLetterMouseDown(e) {
         return;
     }
 
+    if (selectedLetters.has(letter)) {
+        selectedLetters.delete(letter);
+        letter.classList.remove('selected');
+        return;
+    }
+
     selectedLetters.clear();
     letters.forEach(l => l.classList.remove('selected'));
     selectedLetters.add(letter);
     letter.classList.add('selected');
+}
+
+function handleDragStart(e) {
+    draggedLetter = e.target;
+    e.target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', e.target.textContent);
+}
+
+function handleDragEnd(e) {
+    e.target.classList.remove('dragging');
+    draggedLetter = null;
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    
+    const target = e.target;
+    
+    if (!target.classList.contains('letter') || target === draggedLetter || !draggedLetter) {
+        return;
+    }
+
+    const parent = lettersContainer;
+    const draggedIndex = Array.from(parent.children).indexOf(draggedLetter);
+    const targetIndex = Array.from(parent.children).indexOf(target);
+
+    if (draggedIndex < targetIndex) {
+        parent.insertBefore(draggedLetter, target.nextSibling);
+    } else {
+        parent.insertBefore(draggedLetter, target);
+    }
+
+    console.log('Swapped:', draggedLetter.textContent, '<->', target.textContent);
 }
 
 lettersContainer.addEventListener('mousedown', handleContainerMouseDown);
@@ -76,8 +127,12 @@ document.addEventListener('mousemove', handleMouseMove);
 document.addEventListener('mouseup', handleMouseUp);
 
 function handleContainerMouseDown(e) {
-    if (e.target === lettersContainer || e.target === selectionBox) {
+    if (e.target === lettersContainer || e.target === selectionBox || e.target === placeholder) {
         e.preventDefault();
+
+        selectedLetters.clear();
+        letters.forEach(l => l.classList.remove('selected'));
+        
         isSelecting = true;
         selectionStart = { x: e.clientX, y: e.clientY };
         
@@ -139,3 +194,13 @@ function isOverlapping(rect1, rect2) {
         rect1.top > rect2.bottom
     );
 }
+
+document.addEventListener('click', (e) => {
+    if (!e.target.classList.contains('letter') && 
+        !e.target.closest('.input-group') && 
+        !e.target.closest('.instructions') &&
+        !e.target.closest('button')) {
+        selectedLetters.clear();
+        letters.forEach(l => l.classList.remove('selected'));
+    }
+});
